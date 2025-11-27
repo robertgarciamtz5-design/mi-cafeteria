@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Carrito de Compras - Cafetería</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="overlay">
+        <div class="container">
+            <div class="header-menu">
+                <h1>Carrito de Compras</h1>
+                <div class="carrito-info">
+                    <span>Hola, {{ nombre }}</span>
+                </div>
+            </div>
+
+            {% if carrito %}
+            <div class="carrito-items">
+                <table>
+                    <tr>
+                        <th>Producto</th>
+                        <th>Precio Unitario</th>
+                        <th>Cantidad</th>
+                        <th>Subtotal</th>
+                        <th>Acciones</th>
+                    </tr>
+                    {% for item in carrito %}
+                    <tr class="item-carrito" data-producto-id="{{ item.id }}">
+                        <td>{{ item.nombre }}</td>
+                        <td>${{ "%.2f"|format(item.precio) }}</td>
+                        <td>
+                            <div class="cantidad-controls">
+                                <button class="btn-cantidad" onclick="actualizarCantidad('{{ item.id }}', {{ item.cantidad - 1 }})">-</button>
+                                <span class="cantidad" id="cantidad-{{ item.id }}">{{ item.cantidad }}</span>
+                                <button class="btn-cantidad" onclick="actualizarCantidad('{{ item.id }}', {{ item.cantidad + 1 }})">+</button>
+                            </div>
+                        </td>
+                        <td id="subtotal-{{ item.id }}">${{ "%.2f"|format(item.precio * item.cantidad) }}</td>
+                        <td>
+                            <button class="btn-eliminar" onclick="eliminarDelCarrito('{{ item.id }}')">
+                                Eliminar
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </table>
+
+                <div class="carrito-total">
+                    <h3 id="total-carrito">Total: ${{ "%.2f"|format(total) }}</h3>
+                </div>
+
+                <div class="carrito-actions">
+                    <button class="btn-continuar" onclick="realizarPedido()">
+                        Realizar Pedido
+                    </button>
+                    <a href="/menu" class="btn-seguir-comprando">
+                        Seguir Comprando
+                    </a>
+                </div>
+            </div>
+            {% else %}
+            <div class="carrito-vacio">
+                <h3>Tu carrito está vacío</h3>
+                <p>¡Agrega algunos productos deliciosos!</p>
+                <a href="/menu" class="btn-seguir-comprando">
+                    Ver Menú
+                </a>
+            </div>
+            {% endif %}
+
+            <div class="menu-actions">
+                <a href="/menu" class="logout-btn">Volver al Menú</a>
+                <a href="/logout" class="logout-btn">Cerrar sesión</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function actualizarCantidad(productoId, nuevaCantidad) {
+            if (nuevaCantidad <= 0) {
+                eliminarDelCarrito(productoId);
+                return;
+            }
+
+            fetch('/actualizar_cantidad', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    producto_id: productoId,
+                    cantidad: nuevaCantidad
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Recargar la página para ver los cambios
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error al actualizar cantidad');
+            });
+        }
+
+        function eliminarDelCarrito(productoId) {
+            if (!confirm('¿Estás seguro de que quieres eliminar este producto del carrito?')) {
+                return;
+            }
+
+            fetch('/quitar_del_carrito', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    producto_id: productoId
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Recargar la página para ver los cambios
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error al eliminar producto');
+            });
+        }
+
+        function realizarPedido() {
+            alert('¡Funcionalidad de pedido en desarrollo! Pronto podrás completar tu compra.');
+        }
+    </script>
+</body>
+</html>

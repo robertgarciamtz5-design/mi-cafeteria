@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Menú - Cafetería</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="overlay">
+        <div class="container">
+            <div class="header-menu">
+                <h1>Bienvenido, {{ nombre }}</h1>
+                <div class="carrito-info">
+                    <a href="/carrito" class="carrito-btn">
+                        🛒 Carrito 
+                        <span id="contador-carrito" class="contador">0</span>
+                    </a>
+                </div>
+            </div>
+            
+            <h2>Menú de la Cafetería</h2>
+
+            <!-- Bebidas -->
+            <div class="categoria">
+                <h3>🥤 Bebidas</h3>
+                <table>
+                    <tr>
+                        <th>Producto</th>
+                        <th>Precio</th>
+                        <th>Acción</th>
+                    </tr>
+                    {% for item in items.bebidas %}
+                    <tr>
+                        <td>{{ item.nombre }}</td>
+                        <td>${{ item.precio }}</td>
+                        <td>
+                            <button class="btn-agregar" data-producto-id="{{ item.id }}">
+                                Agregar
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
+
+            <!-- Snacks -->
+            <div class="categoria">
+                <h3>🍿 Snacks</h3>
+                <table>
+                    <tr>
+                        <th>Producto</th>
+                        <th>Precio</th>
+                        <th>Acción</th>
+                    </tr>
+                    {% for item in items.snacks %}
+                    <tr>
+                        <td>{{ item.nombre }}</td>
+                        <td>${{ item.precio }}</td>
+                        <td>
+                            <button class="btn-agregar" data-producto-id="{{ item.id }}">
+                                Agregar
+                            </button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
+
+            <!-- Menú del Día -->
+            <div class="categoria">
+                <h3>🍽️ Menú del Día - Semana {{ semana_rotativa }}</h3>
+                <p class="semana-info">Este menú cambia automáticamente cada semana (Rotación: Semana {{ semana_rotativa }} de 6)</p>
+                <table>
+                    <tr>
+                        <th>Producto</th>
+                        <th>Precio</th>
+                        <th>Acción</th>
+                    </tr>
+                    {% for item in items.menu_dia %}
+                    <tr>
+                        <td>{{ item.nombre }}</td>
+                        <td>${{ item.precio }}</td>
+                        <td>
+                            <button class="btn-agregar" data-producto-id="{{ item.id }}">
+                                Agregar
+                            </button>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="3" style="text-align: center; color: #666;">
+                            No hay menú especial disponible esta semana
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
+
+            <div class="menu-actions">
+                <a href="/carrito" class="btn-ver-carrito">Ver Carrito</a>
+                <a href="/logout" class="logout-btn">Cerrar sesión</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Función para actualizar el contador del carrito
+        function actualizarContadorCarrito() {
+            fetch('/carrito')
+                .then(response => response.text())
+                .then(html => {
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = html;
+                    const items = tempDiv.querySelectorAll('.item-carrito');
+                    document.getElementById('contador-carrito').textContent = items.length;
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        // Agregar productos al carrito
+        document.querySelectorAll('.btn-agregar').forEach(button => {
+            button.addEventListener('click', function() {
+                const productoId = this.getAttribute('data-producto-id');
+                
+                fetch('/agregar_al_carrito', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        producto_id: productoId,
+                        cantidad: 1
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Producto agregado al carrito!');
+                        document.getElementById('contador-carrito').textContent = data.total_items;
+                    } else {
+                        alert('Error: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error al agregar producto al carrito');
+                });
+            });
+        });
+
+        // Actualizar contador al cargar la página
+        document.addEventListener('DOMContentLoaded', function() {
+            actualizarContadorCarrito();
+        });
+    </script>
+</body>
+</html>
