@@ -236,3 +236,4 @@ def login_user(correo, contrasena):
 
 # Inicializar la base de datos al importar
 init_db()
+print("✅ BASE DE DATOS INICIALIZADA")
